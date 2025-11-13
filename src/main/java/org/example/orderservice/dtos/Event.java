@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 @AllArgsConstructor
@@ -12,5 +12,6 @@ import java.time.LocalDateTime;
 public class Event {
     private Long id;
     private EventType eventType;
-    private LocalDateTime timestamp;
+    private Instant timestamp;
+
 }
