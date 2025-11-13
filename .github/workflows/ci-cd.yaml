@@ -1,0 +1,37 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches: [ deployment ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          docker build -t order-service-image:$COMMIT_HASH .
+          docker tag order-service-image:$COMMIT_HASH order-service-image:latest
+          
+      - name: Install kubectl if not installed
+        shell: bash
+        run: |
+          if ! command -v kubectl &> /dev/null; then
+            echo "kubectl not found, installing..."
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x kubectl
+            sudo mv kubectl /usr/local/bin/
+          else
+            echo "kubectl already installed, skipping"
+          fi
+      
+
+      - name: Deploy to Minikube
+        run: |
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          kubectl set image deployment/order-service-deployment \
+            order-service=order-service-image:$COMMIT_HASH

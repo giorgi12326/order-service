@@ -29,10 +29,6 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<Order> create(@RequestBody Order order) {
-        if(userClient.userExists(order.getUsername()) && productClient.existsById(order.getProductId())) {
-            return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(order));
-        }
-        System.out.println(userClient.userExists(order.getUsername()));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(order));
     }
 }
