@@ -18,6 +18,7 @@ jobs:
           docker tag order-service-image:$COMMIT_HASH order-service-image:latest
           
       - name: Install kubectl if not installed
+        shell: bash
         run: |
           if ! command -v kubectl &> /dev/null; then
             echo "kubectl not found, installing..."
@@ -27,7 +28,7 @@ jobs:
           else
             echo "kubectl already installed, skipping"
           fi
-        shell: /usr/bin/bash
+      
 
       - name: Deploy to Minikube
         run: |
