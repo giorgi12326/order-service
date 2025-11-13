@@ -11,6 +11,6 @@ public interface UserClient {
     @GetMapping("/api/auth")
     FullUserDTO getUserByUsername(@RequestParam("username") String username);
 
-    @GetMapping("/{username}/exists")
+    @GetMapping("/api/auth/{username}/exists")
     boolean userExists(@PathVariable String username);
 }
