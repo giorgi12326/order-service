@@ -1,0 +1,35 @@
+package org.example.orderservice.service;
+
+import lombok.AllArgsConstructor;
+import org.example.orderservice.dtos.Event;
+import org.example.orderservice.dtos.EventType;
+import org.example.orderservice.repository.OrderRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Service;
+
+import java.util.Objects;
+
+@Service
+@AllArgsConstructor
+public class KafkaConsumer {
+
+    private static final Logger log = LoggerFactory.getLogger(KafkaConsumer.class);
+    private final OrderRepository orderRepository;
+
+    @KafkaListener(topics = "test-topic", groupId = "my-group")
+    public void test(String message) {
+        log.info("Received message: {}", message);
+    }
+
+
+    @KafkaListener(topics = "product-event", groupId = "my-group")
+    public void productListener(Event event) {
+        log.info("Received product-event: {}", event.toString());
+        if (Objects.requireNonNull(event.getEventType()) == EventType.DELETED) {
+            orderRepository.deleteById(event.getId());
+        }
+    }
+
+}
