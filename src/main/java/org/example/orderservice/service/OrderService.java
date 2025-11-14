@@ -21,7 +21,7 @@ public class OrderService {
     }
 
     public Order createOrder(Order order) {
-        if(userClient.userExists(order.getUsername()) && productClient.existsById(order.getProductId())) {
+        if(userClient.userExists(order.getUserId()) && productClient.existsById(order.getProductId())) {
             return orderRepository.save(order);
         }
         throw new RuntimeException("User does not exist");
