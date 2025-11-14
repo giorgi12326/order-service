@@ -35,7 +35,7 @@ public class KafkaConsumer {
         }
     }
 
-    @KafkaListener(topics = "product-event", groupId = "my-group")
+    @KafkaListener(topics = "user-event", groupId = "my-group")
     @Transactional
     public void userListener(Event event) {
         log.info("Received user-event: {}", event.toString());
