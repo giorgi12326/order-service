@@ -12,7 +12,7 @@ public class Order {
     Long id;
 
     @Column(nullable = false)
-    String username;
+    Long userId;
 
     @Column(nullable = false)
     Long productId;

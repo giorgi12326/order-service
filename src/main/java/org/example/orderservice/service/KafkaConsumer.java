@@ -31,9 +31,19 @@ public class KafkaConsumer {
         log.info("Received product-event: {}", event.toString());
         if (event.getEventType() == EventType.DELETED) {
             orderRepository.deleteByProductId(((Integer)event.getPayload()).longValue());
-            log.info("Deleted order By Id: {}", event.getPayload());
-
+            log.info("Deleted order By ProductId: {}", event.getPayload());
         }
     }
+
+    @KafkaListener(topics = "product-event", groupId = "my-group")
+    @Transactional
+    public void userListener(Event event) {
+        log.info("Received user-event: {}", event.toString());
+        if (event.getEventType() == EventType.DELETED) {
+            orderRepository.deleteByUserId(((Integer)event.getPayload()).longValue());
+            log.info("Deleted order By UserId: {}", event.getPayload());
+        }
+    }
+
 
 }
