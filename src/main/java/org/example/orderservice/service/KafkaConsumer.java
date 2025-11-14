@@ -30,8 +30,8 @@ public class KafkaConsumer {
     public void productListener(Event event) {
         log.info("Received product-event: {}", event.toString());
         if (event.getEventType() == EventType.DELETED) {
-            orderRepository.deleteByProductId(event.getId());
-            log.info("Deleted order By Id: {}", event.getId());
+            orderRepository.deleteByProductId((Long)event.getPayload());
+            log.info("Deleted order By Id: {}", event.getPayload());
 
         }
     }
