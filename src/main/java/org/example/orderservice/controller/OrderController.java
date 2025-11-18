@@ -1,14 +1,12 @@
 package org.example.orderservice.controller;
 
 import lombok.AllArgsConstructor;
+import org.example.orderservice.dtos.OrderDTO;
 import org.example.orderservice.entity.Order;
 import org.example.orderservice.service.OrderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -26,5 +24,10 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<Order> create(@RequestBody Order order) {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(order));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<OrderDTO> update(@PathVariable Long id, @RequestBody OrderDTO order) {
+        return ResponseEntity.status(HttpStatus.OK).body(orderService.update(order, id));
     }
 }
