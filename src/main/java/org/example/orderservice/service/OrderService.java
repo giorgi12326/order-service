@@ -2,6 +2,7 @@ package org.example.orderservice.service;
 
 import lombok.AllArgsConstructor;
 import org.example.orderservice.dtos.OrderDTO;
+import org.example.orderservice.dtos.ProductDTO;
 import org.example.orderservice.entity.Order;
 import org.example.orderservice.exception.ResourceNotFoundException;
 import org.example.orderservice.feign.ProductClient;
@@ -35,6 +36,11 @@ public class OrderService {
 
     public OrderDTO update(OrderDTO order, Long id) {
         Order updatedOrder = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        if(!productClient.existsById(order.getProductId()))
+            throw new ResourceNotFoundException("Product not found");
+        if(!userClient.userExists(order.getUserId()))
+            throw new ResourceNotFoundException("User does not exist");
+
         updatedOrder = orderMapper.updateEntity(order, updatedOrder);
         Order save = orderRepository.save(updatedOrder);
         return orderMapper.toDTO(save);
