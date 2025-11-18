@@ -2,8 +2,6 @@ package org.example.orderservice.controller;
 
 import lombok.AllArgsConstructor;
 import org.example.orderservice.entity.Order;
-import org.example.orderservice.feign.ProductClient;
-import org.example.orderservice.feign.UserClient;
 import org.example.orderservice.service.OrderService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +17,6 @@ import java.util.List;
 public class OrderController {
 
     public final OrderService orderService;
-    public final UserClient userClient;
-    public final ProductClient productClient;
 
     @GetMapping
     public ResponseEntity<List<Order>> getAll() {
