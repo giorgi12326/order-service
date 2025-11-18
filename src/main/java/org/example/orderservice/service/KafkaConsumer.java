@@ -8,8 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
-
-import java.util.Objects;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @AllArgsConstructor
@@ -25,13 +24,24 @@ public class KafkaConsumer {
 
 
     @KafkaListener(topics = "product-event", groupId = "my-group")
+    @Transactional
     public void productListener(Event event) {
         log.info("Received product-event: {}", event.toString());
         if (event.getEventType() == EventType.DELETED) {
-            orderRepository.deleteByProductId(event.getId());
-            log.info("Deleted order By Id: {}", event.getId());
-
+            orderRepository.deleteByProductId(((Integer)event.getPayload()).longValue());
+            log.info("Deleted order By ProductId: {}", event.getPayload());
         }
     }
+
+    @KafkaListener(topics = "user-event", groupId = "my-group")
+    @Transactional
+    public void userListener(Event event) {
+        log.info("Received user-event: {}", event.toString());
+        if (event.getEventType() == EventType.DELETED) {
+            orderRepository.deleteByUserId(((Integer)event.getPayload()).longValue());
+            log.info("Deleted order By UserId: {}", event.getPayload());
+        }
+    }
+
 
 }
