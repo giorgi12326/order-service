@@ -10,6 +10,9 @@ import org.example.orderservice.feign.UserClient;
 import org.example.orderservice.mapper.OrderMapper;
 import org.example.orderservice.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,20 +24,29 @@ public class OrderService {
     public final UserClient userClient;
     public final ProductClient productClient;
     public final OrderMapper orderMapper;
+    private CacheManager cacheManager;
 
-
+    @Cacheable(value = "order-cache")
     public List<Order> getAll() {
+        System.out.println("Getting all orders From Database!");
+        System.out.println(cacheManager.getCache("order-cache"));
+
         return orderRepository.findAll();
     }
 
+    @CacheEvict(value = "order-cache", allEntries = true)
     public Order createOrder(Order order) {
+        System.out.println(cacheManager.getCache("order-cache"));
+
         if(userClient.userExists(order.getUserId()) && productClient.existsById(order.getProductId())) {
             return orderRepository.save(order);
         }
         throw new RuntimeException("User does not exist");
     }
 
+    @CacheEvict(value = "order-cache", allEntries = true)
     public OrderDTO update(OrderDTO order, Long id) {
+        System.out.println(cacheManager.getCache("order-cache"));
         Order updatedOrder = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         if(!productClient.existsById(order.getProductId()))
             throw new ResourceNotFoundException("Product not found");
