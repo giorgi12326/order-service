@@ -29,8 +29,8 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(order));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<OrderDTO> update(@PathVariable Long id, @RequestBody OrderDTO order) {
-        return ResponseEntity.status(HttpStatus.OK).body(orderService.update(order, id));
-    }
+//    @PutMapping("/{id}")
+//    public ResponseEntity<OrderDTO> update(@PathVariable Long id, @RequestBody OrderDTO order) {
+//        return ResponseEntity.status(HttpStatus.OK).body(orderService.update(order, id));
+//    }
 }
