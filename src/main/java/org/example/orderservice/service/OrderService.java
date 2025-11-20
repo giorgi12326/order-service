@@ -36,25 +36,36 @@ public class OrderService {
 
     @CacheEvict(value = "order-cache", allEntries = true)
     public Order createOrder(Order order) {
-        System.out.println(cacheManager.getCache("order-cache"));
-
-        if(userClient.userExists(order.getUserId()) && productClient.existsById(order.getProductId())) {
-            return orderRepository.save(order);
+        if(!userClient.userExists(order.getUserId()) ) {
+            throw new RuntimeException("User does not exist");
         }
-        throw new RuntimeException("User does not exist");
+
+        List<ProductDTO> productsByID = productClient.getProductsByID(order.getProductIds());
+        if(productsByID.size()!= order.getProductIds().size()){
+            throw new ResourceNotFoundException("Product Ids Not Found");
+        }
+
+        float totalPrice = 0;
+        for (ProductDTO product : productsByID) {
+            totalPrice += product.getPrice();
+        }
+        order.setTotalPrice(totalPrice);
+
+        return orderRepository.save(order);
+
     }
 
-    @CacheEvict(value = "order-cache", allEntries = true)
-    public OrderDTO update(OrderDTO order, Long id) {
-        System.out.println(cacheManager.getCache("order-cache"));
-        Order updatedOrder = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-        if(!productClient.existsById(order.getProductId()))
-            throw new ResourceNotFoundException("Product not found");
-        if(!userClient.userExists(order.getUserId()))
-            throw new ResourceNotFoundException("User does not exist");
-
-        updatedOrder = orderMapper.updateEntity(order, updatedOrder);
-        Order save = orderRepository.save(updatedOrder);
-        return orderMapper.toDTO(save);
-    }
+//    @CacheEvict(value = "order-cache", allEntries = true)
+//    public OrderDTO update(OrderDTO order, Long id) {
+//        System.out.println(cacheManager.getCache("order-cache"));
+//        Order updatedOrder = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+//        if(!productClient.existsById(order.getProductId()))
+//            throw new ResourceNotFoundException("Product not found");
+//        if(!userClient.userExists(order.getUserId()))
+//            throw new ResourceNotFoundException("User does not exist");
+//
+//        updatedOrder = orderMapper.updateEntity(order, updatedOrder);
+//        Order save = orderRepository.save(updatedOrder);
+//        return orderMapper.toDTO(save);
+//    }
 }

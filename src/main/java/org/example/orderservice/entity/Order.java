@@ -3,6 +3,8 @@ package org.example.orderservice.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.List;
+
 @Entity
 @Table(name = "orders")
 @Data
@@ -15,6 +17,10 @@ public class Order {
     Long userId;
 
     @Column(nullable = false)
-    Long productId;
+    List<Long> productIds;
 
+    float totalPrice;
+
+    @Enumerated(EnumType.STRING)
+    OrderStatus status;
 }

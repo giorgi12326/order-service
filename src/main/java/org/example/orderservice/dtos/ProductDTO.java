@@ -20,4 +20,6 @@ public class ProductDTO {
 
     LocalDate createdAt;
 
+    Float price;
+
 }
