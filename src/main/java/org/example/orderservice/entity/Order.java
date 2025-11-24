@@ -24,7 +24,7 @@ public class Order {
 
     LocalDate updatedAt;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     List<OrderItem> orderItems;
 
     @PrePersist
