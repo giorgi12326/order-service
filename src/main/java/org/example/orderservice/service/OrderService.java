@@ -58,7 +58,7 @@ public class OrderService {
         List<ReserveResponseDTO> reservedProducts = productClient.getAndReserveProducts(reserveDTOs);
 
         Map<Long, Float> productPriceMap = reservedProducts.stream()
-                .collect(Collectors.toMap(ReserveResponseDTO::getProductId, ReserveResponseDTO::getPrice));
+                .collect(Collectors.toMap(ReserveResponseDTO::getId, ReserveResponseDTO::getPrice));
         System.out.println(productPriceMap);
         float amount = 0f;
         for (OrderItem item : items) {
