@@ -33,7 +33,7 @@ public class KafkaConsumer {
             List<Long> productIds = (List<Long>) event.getPayload();
 
             for (Long productId : productIds) {
-                orderRepository.deleteByProductId(productId); // existing method for single product
+//                orderRepository.deleteByProductId(productId); // existing method for single product
             }            log.info("Deleted order By ProductId: {}", event.getPayload());
         }
     }
