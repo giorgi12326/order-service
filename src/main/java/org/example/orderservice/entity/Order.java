@@ -20,7 +20,7 @@ public class Order {
 
     OrderStatus status;
 
-    LocalDate creationDate;
+    LocalDate createdAt;
 
     LocalDate updatedAt;
 
@@ -29,7 +29,7 @@ public class Order {
 
     @PrePersist
     public void prePersist() {
-        creationDate = LocalDate.now();
+        createdAt = LocalDate.now();
     }
     @PreUpdate
     public void preUpdate() {

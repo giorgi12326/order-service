@@ -28,11 +28,11 @@ public class OrderService {
     private CacheManager cacheManager;
 
     @Cacheable(value = "order-cache")
-    public List<Order> getAll() {
+    public List<OrderDTO> getAll() {
         System.out.println("Getting all orders From Database!");
         System.out.println(cacheManager.getCache("order-cache"));
 
-        return orderRepository.findAll();
+        return orderMapper.toDTOs(orderRepository.findAll());
     }
 
     @CacheEvict(value = "order-cache", allEntries = true)

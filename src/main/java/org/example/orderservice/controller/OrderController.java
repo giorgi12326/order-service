@@ -23,7 +23,7 @@ public class OrderController {
     public final OrderService orderService;
 
     @GetMapping
-    public ResponseEntity<List<Order>> getAll() {
+    public ResponseEntity<List<OrderDTO>> getAll() {
         return ResponseEntity.ok(orderService.getAll());
     }
 
