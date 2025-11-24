@@ -1,5 +1,6 @@
 package org.example.orderservice.mapper;
 import org.example.orderservice.dtos.OrderDTO;
+import org.example.orderservice.dtos.OrderItemDTO;
 import org.example.orderservice.dtos.ReserveProductDTO;
 import org.example.orderservice.entity.Order;
 import org.example.orderservice.entity.OrderItem;
@@ -16,4 +17,6 @@ public interface OrderMapper {
 
     List<ReserveProductDTO> toReserveDTO(List<OrderItem> orderItems);
     OrderDTO toDTO(Order entity);
+
+    List<OrderItem> toEntities(List<OrderItemDTO> orderItems);
 }

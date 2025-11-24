@@ -9,17 +9,18 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @FeignClient(name = "product-service", url = "${product.service.url}")
+@RequestMapping("/api")  // <--- Class-level prefix
 public interface ProductClient {
-    @GetMapping("/api/{id}")
+    @GetMapping("{id}")
     ProductDTO getProductByID(@PathVariable("id") Long id);
 
-    @PostMapping("/api/by-ids")
+    @PostMapping("/by-ids")
     List<ProductDTO> getProductsByID(@RequestBody List<Long> ids);
 
-    @PostMapping("/api/reserve")
+    @PostMapping("/reserve")
     List<ReserveResponseDTO> getAndReserveProducts(@RequestBody List<ReserveProductDTO> reserveProductDTO);
 
-    @GetMapping("/api/{id}/exists")
+    @GetMapping("/{id}/exists")
     boolean existsById(@PathVariable("id") Long id);
 
 }

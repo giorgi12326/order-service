@@ -1,9 +1,12 @@
 package org.example.orderservice.service;
 
 import lombok.AllArgsConstructor;
+import org.example.orderservice.dtos.OrderDTO;
 import org.example.orderservice.dtos.ReserveProductDTO;
 import org.example.orderservice.dtos.ReserveResponseDTO;
 import org.example.orderservice.entity.Order;
+import org.example.orderservice.entity.OrderItem;
+import org.example.orderservice.entity.OrderStatus;
 import org.example.orderservice.feign.ProductClient;
 import org.example.orderservice.feign.UserClient;
 import org.example.orderservice.mapper.OrderMapper;
@@ -33,23 +36,29 @@ public class OrderService {
     }
 
     @CacheEvict(value = "order-cache", allEntries = true)
-    public Order createOrder(Order order) {
-        if(!userClient.userExists(order.getUserId()) ) {
+    public Order createOrder(OrderDTO orderDTO) {
+        if (!userClient.userExists(orderDTO.getUserId())) {
             throw new RuntimeException("User does not exist");
         }
 
-        List<ReserveProductDTO> orderItems = orderMapper.toReserveDTO(order.getOrderItems());
-        List<ReserveResponseDTO> productsByID = productClient.getAndReserveProducts(orderItems);
+        Order order = new Order();
+        order.setUserId(orderDTO.getUserId());
+        order.setStatus(OrderStatus.PENDING);
 
-        float amount = 0;
-        for (ReserveResponseDTO responseDTO : productsByID) {
-            amount += responseDTO.getPrice() * responseDTO.getQuantity();
-        }
+        List<OrderItem> items = orderMapper.toEntities(orderDTO.getOrderItems());
+        order.setOrderItems(items);
+
+        List<ReserveProductDTO> reserveDTOs = orderMapper.toReserveDTO(items);
+        List<ReserveResponseDTO> reservedProducts = productClient.getAndReserveProducts(reserveDTOs);
+
+        float amount = reservedProducts.stream()
+                .map(r -> r.getPrice() * r.getQuantity())
+                .reduce(0f, Float::sum);
         order.setAmount(amount);
 
         return orderRepository.save(order);
-
     }
+
 
 //    @CacheEvict(value = "order-cache", allEntries = true)
 //    public OrderDTO update(OrderDTO order, Long id) {

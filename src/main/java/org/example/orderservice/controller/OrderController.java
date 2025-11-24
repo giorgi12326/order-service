@@ -1,6 +1,7 @@
 package org.example.orderservice.controller;
 
 import lombok.AllArgsConstructor;
+import org.example.orderservice.dtos.OrderDTO;
 import org.example.orderservice.dtos.ReserveProductDTO;
 import org.example.orderservice.dtos.ReserveResponseDTO;
 import org.example.orderservice.entity.Order;
@@ -27,7 +28,7 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<Order> create(@RequestBody Order order) {
+    public ResponseEntity<Order> create(@RequestBody OrderDTO order) {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(order));
     }
 
