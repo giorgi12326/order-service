@@ -3,7 +3,7 @@ package org.example.orderservice.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity
@@ -20,19 +20,19 @@ public class Order {
 
     OrderStatus status;
 
-    LocalDateTime creationDate;
+    LocalDate creationDate;
 
-    LocalDateTime updatedAt;
+    LocalDate updatedAt;
 
     @OneToMany(cascade = CascadeType.ALL)
     List<OrderItem> orderItems;
 
     @PrePersist
     public void prePersist() {
-        creationDate = LocalDateTime.now();
+        creationDate = LocalDate.now();
     }
     @PreUpdate
     public void preUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = LocalDate.now();
     }
 }
