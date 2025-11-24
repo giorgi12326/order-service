@@ -10,6 +10,8 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @AllArgsConstructor
 public class KafkaConsumer {
@@ -28,8 +30,11 @@ public class KafkaConsumer {
     public void productListener(Event event) {
         log.info("Received product-event: {}", event.toString());
         if (event.getEventType() == EventType.DELETED) {
-            orderRepository.deleteByProductId(((Integer)event.getPayload()).longValue());
-            log.info("Deleted order By ProductId: {}", event.getPayload());
+            List<Long> productIds = (List<Long>) event.getPayload();
+
+            for (Long productId : productIds) {
+                orderRepository.deleteByProductId(productId); // existing method for single product
+            }            log.info("Deleted order By ProductId: {}", event.getPayload());
         }
     }
 

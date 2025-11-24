@@ -1,15 +1,13 @@
 package org.example.orderservice.service;
 
 import lombok.AllArgsConstructor;
-import org.example.orderservice.dtos.OrderDTO;
-import org.example.orderservice.dtos.ProductDTO;
+import org.example.orderservice.dtos.ReserveProductDTO;
+import org.example.orderservice.dtos.ReserveResponseDTO;
 import org.example.orderservice.entity.Order;
-import org.example.orderservice.exception.ResourceNotFoundException;
 import org.example.orderservice.feign.ProductClient;
 import org.example.orderservice.feign.UserClient;
 import org.example.orderservice.mapper.OrderMapper;
 import org.example.orderservice.repository.OrderRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -40,16 +38,14 @@ public class OrderService {
             throw new RuntimeException("User does not exist");
         }
 
-        List<ProductDTO> productsByID = productClient.getProductsByID(order.getProductIds());
-        if(productsByID.size()!= order.getProductIds().size()){
-            throw new ResourceNotFoundException("Product Ids Not Found");
-        }
+        List<ReserveProductDTO> orderItems = orderMapper.toReserveDTO(order.getOrderItems());
+        List<ReserveResponseDTO> productsByID = productClient.getAndReserveProducts(orderItems);
 
-        float totalPrice = 0;
-        for (ProductDTO product : productsByID) {
-            totalPrice += product.getPrice();
+        float amount = 0;
+        for (ReserveResponseDTO responseDTO : productsByID) {
+            amount += responseDTO.getPrice() * responseDTO.getQuantity();
         }
-        order.setTotalPrice(totalPrice);
+        order.setAmount(amount);
 
         return orderRepository.save(order);
 
