@@ -17,6 +17,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -55,9 +57,20 @@ public class OrderService {
         List<ReserveProductDTO> reserveDTOs = orderMapper.toReserveDTO(items);
         List<ReserveResponseDTO> reservedProducts = productClient.getAndReserveProducts(reserveDTOs);
 
-        float amount = reservedProducts.stream()
-                .map(r -> r.getPrice() * r.getQuantity())
-                .reduce(0f, Float::sum);
+        Map<Long, Float> productPriceMap = reservedProducts.stream()
+                .collect(Collectors.toMap(ReserveResponseDTO::getProductId, ReserveResponseDTO::getPrice));
+
+        float amount = 0f;
+        for (OrderItem item : items) {
+            Float price = productPriceMap.get(item.getProductId());
+            if (price != null) {
+                amount += price * item.getQuantity();
+                item.setPrice(price); // set the price on order item
+            } else {
+                throw new RuntimeException("Product not found or not available: " + item.getProductId());
+            }
+        }
+
         order.setAmount(amount);
 
         return orderMapper.toDTO(orderRepository.save(order));

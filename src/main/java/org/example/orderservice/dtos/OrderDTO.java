@@ -9,8 +9,8 @@ public class OrderDTO {
     private Long id;
     private Long userId;
     private Float amount;
-    private String status; // or enum name
-    private String createdAt; // String instead of LocalDateTime
+    private String status;
+    private String createdAt;
     private String updatedAt;
     private List<OrderItemDTO> orderItems;
 }
