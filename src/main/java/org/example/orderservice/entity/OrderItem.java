@@ -18,6 +18,10 @@ public class OrderItem {
 
     Long productId;
 
+    String productName;
+
+    String productDescription;
+
     Integer quantity;
 
     Float price;

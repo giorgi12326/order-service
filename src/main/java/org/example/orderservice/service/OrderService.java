@@ -59,11 +59,10 @@ public class OrderService {
 
         Map<Long, Float> productPriceMap = reservedProducts.stream()
                 .collect(Collectors.toMap(ReserveResponseDTO::getId, ReserveResponseDTO::getPrice));
-        System.out.println(productPriceMap);
+
         float amount = 0f;
         for (OrderItem item : items) {
             Float price = productPriceMap.get(item.getProductId());
-            System.out.println(price + " ASDASDASDSA");
             if (price != null) {
                 amount += price * item.getQuantity();
                 item.setPrice(price); // set the price on order item
