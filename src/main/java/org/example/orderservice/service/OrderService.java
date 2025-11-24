@@ -36,7 +36,7 @@ public class OrderService {
     }
 
     @CacheEvict(value = "order-cache", allEntries = true)
-    public Order createOrder(OrderDTO orderDTO) {
+    public OrderDTO createOrder(OrderDTO orderDTO) {
         if (!userClient.userExists(orderDTO.getUserId())) {
             throw new RuntimeException("User does not exist");
         }
@@ -56,7 +56,7 @@ public class OrderService {
                 .reduce(0f, Float::sum);
         order.setAmount(amount);
 
-        return orderRepository.save(order);
+        return orderMapper.toDTO(orderRepository.save(order));
     }
 
 
