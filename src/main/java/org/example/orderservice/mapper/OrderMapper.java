@@ -18,6 +18,8 @@ public interface OrderMapper {
     List<ReserveProductDTO> toReserveDTO(List<OrderItem> orderItems);
     OrderDTO toDTO(Order entity);
 
+    OrderItem toEntity(OrderItemDTO orderItem);
+
     List<OrderItem> toEntities(List<OrderItemDTO> orderItems);
 
     List<OrderDTO> toDTOs(List<Order> all);
