@@ -46,6 +46,10 @@ public class OrderService {
         order.setStatus(OrderStatus.PENDING);
 
         List<OrderItem> items = orderMapper.toEntities(orderDTO.getOrderItems());
+        for (OrderItem item : items) {
+            item.setOrder(order);
+        }
+
         order.setOrderItems(items);
 
         List<ReserveProductDTO> reserveDTOs = orderMapper.toReserveDTO(items);
