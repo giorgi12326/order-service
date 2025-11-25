@@ -11,9 +11,14 @@ import org.example.orderservice.feign.ProductClient;
 import org.example.orderservice.feign.UserClient;
 import org.example.orderservice.mapper.OrderMapper;
 import org.example.orderservice.repository.OrderRepository;
+import org.example.orderservice.security.CustomUserDetails;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -41,7 +46,9 @@ public class OrderService {
         }
 
         Order order = new Order();
-        order.setUserId(orderDTO.getUserId());
+        Authentication user = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails principal = (CustomUserDetails) user.getPrincipal();
+        order.setUserId(principal.getId());
         order.setStatus(OrderStatus.PENDING);
 
         List<OrderItem> items = orderMapper.toEntities(orderDTO.getOrderItems());
