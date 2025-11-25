@@ -4,63 +4,44 @@ import lombok.AllArgsConstructor;
 import org.example.orderservice.dtos.OrderDTO;
 import org.example.orderservice.dtos.ReserveProductDTO;
 import org.example.orderservice.dtos.ReserveResponseDTO;
-import org.example.orderservice.entity.Order;
-import org.example.orderservice.entity.OrderItem;
-import org.example.orderservice.entity.OrderStatus;
 import org.example.orderservice.feign.ProductClient;
 import org.example.orderservice.feign.UserClient;
 import org.example.orderservice.mapper.OrderMapper;
 import org.example.orderservice.repository.OrderRepository;
-import org.example.orderservice.security.CustomUserDetails;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
 public class OrderService {
     public final OrderRepository orderRepository;
-    public final UserClient userClient;
     public final ProductClient productClient;
+    public final OrderPersistenceService orderPersistenceService;
     public final OrderMapper orderMapper;
-    private CacheManager cacheManager;
 
     @Cacheable(value = "order-cache")
     public List<OrderDTO> getAll() {
         return orderMapper.toDTOs(orderRepository.findAll());
     }
 
-    @CacheEvict(value = "order-cache", allEntries = true)
     public OrderDTO createOrder(OrderDTO orderDTO) {
-        Order order = new Order();
+       List<ReserveProductDTO> reserveDTOs = orderMapper.toReserves(orderDTO.getOrderItems());
+       List<ReserveResponseDTO> reservedProducts = productClient.getAndReserveProducts(reserveDTOs);
+        try {
+            return orderPersistenceService.getOrderDTO(reservedProducts);
+        }
+        catch (Exception e) {
+            productClient.compensateReserveProducts(reserveDTOs);
+            throw new RuntimeException("Order creation failed, products released", e);
 
-        Authentication user = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails principal = (CustomUserDetails) user.getPrincipal();
-        order.setUserId(principal.getId());
-        order.setStatus(OrderStatus.PENDING);
-
-        List<ReserveProductDTO> reserveDTOs = orderMapper.toReserves(orderDTO.getOrderItems());
-        List<ReserveResponseDTO> reservedProducts = productClient.getAndReserveProducts(reserveDTOs);
-        List<OrderItem> orderItems = orderMapper.toOrderItems(reservedProducts);
-
-        float amount = 0f;
-        for (OrderItem item : orderItems) {
-            amount += item.getPrice() * item.getQuantity();
-            item.setOrder(order);
         }
 
-        order.setOrderItems(orderItems);
-        order.setAmount(amount);
-
-        return orderMapper.toDTO(orderRepository.save(order));
     }
+
 
 
 //    @CacheEvict(value = "order-cache", allEntries = true)
