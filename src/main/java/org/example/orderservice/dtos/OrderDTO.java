@@ -1,11 +1,16 @@
 package org.example.orderservice.dtos;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+import java.util.List;
+
+@Data
 public class OrderDTO {
-    Long userId;
-    Long productId;
+    private Long id;
+    private Long userId;
+    private Float amount;
+    private String status;
+    private String createdAt;
+    private String updatedAt;
+    private List<OrderItemDTO> orderItems;
 }
