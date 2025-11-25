@@ -31,9 +31,6 @@ public class OrderService {
 
     @Cacheable(value = "order-cache")
     public List<OrderDTO> getAll() {
-        System.out.println("Getting all orders From Database!");
-        System.out.println(cacheManager.getCache("order-cache"));
-
         return orderMapper.toDTOs(orderRepository.findAll());
     }
 

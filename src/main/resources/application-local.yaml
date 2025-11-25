@@ -1,0 +1,14 @@
+server:
+  port: 8082
+
+user:
+  service:
+    url: localhost:8080
+
+product:
+  service:
+    url: localhost:8081
+
+kafka:
+  enabled: false
+
