@@ -15,10 +15,8 @@ import org.example.orderservice.security.CustomUserDetails;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -41,40 +39,24 @@ public class OrderService {
 
     @CacheEvict(value = "order-cache", allEntries = true)
     public OrderDTO createOrder(OrderDTO orderDTO) {
-        if (!userClient.userExists(orderDTO.getUserId())) {
-            throw new RuntimeException("User does not exist");
-        }
-
         Order order = new Order();
+
         Authentication user = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails principal = (CustomUserDetails) user.getPrincipal();
         order.setUserId(principal.getId());
         order.setStatus(OrderStatus.PENDING);
 
-        List<OrderItem> items = orderMapper.toEntities(orderDTO.getOrderItems());
-        for (OrderItem item : items) {
+        List<ReserveProductDTO> reserveDTOs = orderMapper.toReserves(orderDTO.getOrderItems());
+        List<ReserveResponseDTO> reservedProducts = productClient.getAndReserveProducts(reserveDTOs);
+        List<OrderItem> orderItems = orderMapper.toOrderItems(reservedProducts);
+
+        float amount = 0f;
+        for (OrderItem item : orderItems) {
+            amount += item.getPrice() * item.getQuantity();
             item.setOrder(order);
         }
 
-        order.setOrderItems(items);
-
-        List<ReserveProductDTO> reserveDTOs = orderMapper.toReserveDTO(items);
-        List<ReserveResponseDTO> reservedProducts = productClient.getAndReserveProducts(reserveDTOs);
-
-        Map<Long, Float> productPriceMap = reservedProducts.stream()
-                .collect(Collectors.toMap(ReserveResponseDTO::getId, ReserveResponseDTO::getPrice));
-
-        float amount = 0f;
-        for (OrderItem item : items) {
-            Float price = productPriceMap.get(item.getProductId());
-            if (price != null) {
-                amount += price * item.getQuantity();
-                item.setPrice(price); // set the price on order item
-            } else {
-                throw new RuntimeException("Product not found or not available: " + item.getProductId());
-            }
-        }
-
+        order.setOrderItems(orderItems);
         order.setAmount(amount);
 
         return orderMapper.toDTO(orderRepository.save(order));

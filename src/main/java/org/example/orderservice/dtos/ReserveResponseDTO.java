@@ -4,9 +4,13 @@ import lombok.Data;
 
 @Data
 public class ReserveResponseDTO {
-    Long id;
+    private Long productId;
 
-    Integer quantity;
+    private String productName;
 
-    Float price;
+    private String productDescription;
+
+    private Integer quantity;
+
+    private Float price;
 }
