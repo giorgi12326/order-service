@@ -14,6 +14,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 @Service
 @AllArgsConstructor
@@ -29,17 +30,22 @@ public class OrderService {
     }
 
     public OrderDTO createOrder(OrderDTO orderDTO) {
-       List<ReserveProductDTO> reserveDTOs = orderMapper.toReserves(orderDTO.getOrderItems());
-       List<ReserveResponseDTO> reservedProducts = productClient.getAndReserveProducts(reserveDTOs);
+        List<ReserveProductDTO> reserveDTOs = orderMapper.toReserves(orderDTO.getOrderItems());
+        List<ReserveResponseDTO> reservedProducts;
         try {
+            reservedProducts = productClient.getAndReserveProducts(reserveDTOs);
+        }
+        catch (feign.RetryableException e){
+            productClient.compensateReserveProducts(reserveDTOs);
+            throw new RuntimeException("Order creation response lost!", e);
+        }
+        try{
             return orderPersistenceService.getOrderDTO(reservedProducts);
         }
-        catch (Exception e) {
+        catch (Exception e){
             productClient.compensateReserveProducts(reserveDTOs);
-            throw new RuntimeException("Order creation failed, products released", e);
-
+            throw new RuntimeException("Order creation response lost!", e);
         }
-
     }
 
 
