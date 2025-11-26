@@ -32,7 +32,7 @@ public class OrderService {
     public OrderDTO createOrder(OrderDTO orderDTO) {
         List<ReserveProductDTO> reserveDTOs = orderMapper.toReserves(orderDTO.getOrderItems());
         List<ReserveResponseDTO> reservedProducts;
-        try {
+        try {//here default to compensating , because i assumed that B commits more often then not
             reservedProducts = productClient.getAndReserveProducts(reserveDTOs);
         }
         catch (feign.RetryableException e){
