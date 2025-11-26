@@ -61,6 +61,7 @@ public class OrderService {
 
     @Transactional
     public OrderDTO payForOrder(Long id) {
+        System.out.println("testing");
         Order order = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order Not Found!"));
         order.setStatus(OrderStatus.PAID);
         return orderMapper.toDTO(orderRepository.save(order));
