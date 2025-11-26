@@ -4,13 +4,17 @@ import lombok.AllArgsConstructor;
 import org.example.orderservice.dtos.OrderDTO;
 import org.example.orderservice.dtos.ReserveProductDTO;
 import org.example.orderservice.dtos.ReserveResponseDTO;
+import org.example.orderservice.entity.Order;
 import org.example.orderservice.feign.ProductClient;
 import org.example.orderservice.feign.UserClient;
 import org.example.orderservice.mapper.OrderMapper;
 import org.example.orderservice.repository.OrderRepository;
+import org.example.orderservice.security.CustomUserDetails;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,7 +30,9 @@ public class OrderService {
 
     @Cacheable(value = "order-cache")
     public List<OrderDTO> getAll() {
-        return orderMapper.toDTOs(orderRepository.findAll());
+        CustomUserDetails principal = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Order> all = orderRepository.findAllByUserId(principal.getId());
+        return orderMapper.toDTOs(all);
     }
 
     public OrderDTO createOrder(OrderDTO orderDTO) {
