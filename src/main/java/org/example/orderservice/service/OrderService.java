@@ -1,10 +1,14 @@
 package org.example.orderservice.service;
 
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import org.example.orderservice.controller.OrderController;
 import org.example.orderservice.dtos.OrderDTO;
 import org.example.orderservice.dtos.ReserveProductDTO;
 import org.example.orderservice.dtos.ReserveResponseDTO;
 import org.example.orderservice.entity.Order;
+import org.example.orderservice.entity.OrderStatus;
+import org.example.orderservice.exception.ResourceNotFoundException;
 import org.example.orderservice.feign.ProductClient;
 import org.example.orderservice.feign.UserClient;
 import org.example.orderservice.mapper.OrderMapper;
@@ -16,6 +20,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -54,7 +59,12 @@ public class OrderService {
         }
     }
 
-
+    @Transactional
+    public OrderDTO payForOrder(Long id) {
+        Order order = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order Not Found!"));
+        order.setStatus(OrderStatus.PAID);
+        return orderMapper.toDTO(orderRepository.save(order));
+    }
 
 //    @CacheEvict(value = "order-cache", allEntries = true)
 //    public OrderDTO update(OrderDTO order, Long id) {
