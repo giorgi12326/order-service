@@ -1,6 +1,10 @@
 package org.example.orderservice.config;
 
 import jakarta.annotation.PostConstruct;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
+import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -13,10 +17,14 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
+import java.util.Objects;
+
 
 @Configuration
 @EnableCaching
+@AllArgsConstructor
 public class RedisCacheConfig {
+    private final CacheManager cacheManager;
 
     @Bean
     @Profile("!local")
@@ -36,6 +44,6 @@ public class RedisCacheConfig {
 
     @EventListener(ApplicationReadyEvent.class)
     public void clearCacheOnStartup() {
-        cacheManager.getCache("order-cache").clear();
+        Objects.requireNonNull(cacheManager.getCache("order-cache")).clear();
     }
 }
