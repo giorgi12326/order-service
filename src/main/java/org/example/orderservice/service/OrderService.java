@@ -71,6 +71,18 @@ public class OrderService {
         return orderMapper.toDTO(orderRepository.save(order));
     }
 
+    @Transactional
+    @CacheEvict(value = "order-cache", allEntries = true)
+    public OrderDTO unpayForOrder(Long id) {
+        Order order = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order Not Found!"));
+        if(order.getStatus().equals(OrderStatus.PAID)){
+            order.setStatus(OrderStatus.PENDING);
+            return orderMapper.toDTO(orderRepository.save(order));
+        }
+            throw new ConflictException("Order Payment was never made!");
+    }
+
+
 //    @CacheEvict(value = "order-cache", allEntries = true)
 //    public OrderDTO update(OrderDTO order, Long id) {
 //        System.out.println(cacheManager.getCache("order-cache"));
