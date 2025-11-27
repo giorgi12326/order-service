@@ -34,8 +34,4 @@ public class RedisCacheConfig {
         return new NoOpCacheManager();
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void clearCacheOnStartup(CacheManager cacheManager) {
-        Objects.requireNonNull(cacheManager.getCache("order-cache")).clear();
-    }
 }
