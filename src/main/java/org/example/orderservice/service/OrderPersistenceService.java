@@ -10,6 +10,7 @@ import org.example.orderservice.mapper.OrderMapper;
 import org.example.orderservice.repository.OrderRepository;
 import org.example.orderservice.security.CustomUserDetails;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ public class OrderPersistenceService {
 
 
     @Transactional
-    @CacheEvict(value = "order-cache", allEntries = true)
+    @Cacheable(value = "order-cache", key = "#root.methodName + ':' + T(org.springframework.security.core.context.SecurityContextHolder).context.authentication.name")
     public OrderDTO getOrderDTO(List<ReserveResponseDTO> reservedProducts) {
         List<OrderItem> orderItems = orderMapper.toOrderItems(reservedProducts);
 
