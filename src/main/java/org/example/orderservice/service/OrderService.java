@@ -8,6 +8,7 @@ import org.example.orderservice.dtos.ReserveProductDTO;
 import org.example.orderservice.dtos.ReserveResponseDTO;
 import org.example.orderservice.entity.Order;
 import org.example.orderservice.entity.OrderStatus;
+import org.example.orderservice.exception.ConflictException;
 import org.example.orderservice.exception.ResourceNotFoundException;
 import org.example.orderservice.feign.ProductClient;
 import org.example.orderservice.feign.UserClient;
@@ -63,6 +64,9 @@ public class OrderService {
     @CacheEvict(value = "order-cache", allEntries = true)
     public OrderDTO payForOrder(Long id) {
         Order order = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order Not Found!"));
+        if(order.getStatus().equals(OrderStatus.PAID)){
+            throw new ConflictException("Order Payment Already made!");
+        }
         order.setStatus(OrderStatus.PAID);
         return orderMapper.toDTO(orderRepository.save(order));
     }
