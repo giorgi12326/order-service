@@ -31,7 +31,14 @@ public class OrderPersistenceService {
     @Transactional
     public OrderDTO getOrderDTO(List<ReserveProductDTO> reservedProductsFromInventory) {
         List<ReserveResponseDTO> reservedProducts = productClient.getInfoAboutProducts(reservedProductsFromInventory);
-
+        for (ReserveResponseDTO reservedProduct : reservedProducts) {
+            for(ReserveProductDTO reservedProductFromInventory : reservedProductsFromInventory) {
+                if(reservedProduct.getProductId().equals(reservedProductFromInventory.getProductId())) {
+                    reservedProduct.setQuantity(reservedProductFromInventory.getQuantity());
+                    break;
+                }
+            }
+        }
         List<OrderItem> orderItems = orderMapper.toOrderItems(reservedProducts);
 
         Order order = new Order();
