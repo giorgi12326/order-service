@@ -1,10 +1,11 @@
+
 user:
   service:
     url: ${USER_SERVICE_URL:http://localhost:8081}
 
-product:
+inventory:
   service:
-    url: ${PRODUCT_SERVICE_URL:http://localhost:8082}
+    url: ${INVENTORY_SERVICE_URL:http://localhost:8083}
 
 spring:
   kafka:

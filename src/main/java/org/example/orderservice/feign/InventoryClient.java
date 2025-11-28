@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@FeignClient(name = "product-service", url = "${product.service.url}")
-public interface ProductClient {
+@FeignClient(name = "inventory-service", url = "${inventory.service.url")
+public interface InventoryClient {
 
     @PostMapping("/api/reserve")
     List<ReserveResponseDTO> getAndReserveProducts(@RequestBody List<ReserveProductDTO> reserveProductDTO);

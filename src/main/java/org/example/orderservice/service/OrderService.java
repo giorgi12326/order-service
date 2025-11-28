@@ -1,8 +1,6 @@
 package org.example.orderservice.service;
 
-import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import org.example.orderservice.controller.OrderController;
 import org.example.orderservice.dtos.OrderDTO;
 import org.example.orderservice.dtos.ReserveProductDTO;
 import org.example.orderservice.dtos.ReserveResponseDTO;
@@ -10,28 +8,21 @@ import org.example.orderservice.entity.Order;
 import org.example.orderservice.entity.OrderStatus;
 import org.example.orderservice.exception.ConflictException;
 import org.example.orderservice.exception.ResourceNotFoundException;
-import org.example.orderservice.feign.ProductClient;
-import org.example.orderservice.feign.UserClient;
+import org.example.orderservice.feign.InventoryClient;
 import org.example.orderservice.mapper.OrderMapper;
 import org.example.orderservice.repository.OrderRepository;
 import org.example.orderservice.security.CustomUserDetails;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 @Service
 @AllArgsConstructor
 public class OrderService {
     public final OrderRepository orderRepository;
-    public final ProductClient productClient;
+    public final InventoryClient inventoryClient;
     public final OrderPersistenceService orderPersistenceService;
     public final OrderMapper orderMapper;
 
@@ -45,17 +36,17 @@ public class OrderService {
         List<ReserveProductDTO> reserveDTOs = orderMapper.toReserves(orderDTO.getOrderItems());
         List<ReserveResponseDTO> reservedProducts;
         try {//here default to compensating , because i assumed that B commits more often then not
-            reservedProducts = productClient.getAndReserveProducts(reserveDTOs);
+            reservedProducts = inventoryClient.getAndReserveProducts(reserveDTOs);
         }
         catch (feign.RetryableException e){
-            productClient.compensateReserveProducts(reserveDTOs);
+            inventoryClient.compensateReserveProducts(reserveDTOs);
             throw new RuntimeException("Order creation response lost!", e);
         }
         try{
             return orderPersistenceService.getOrderDTO(reservedProducts);
         }
         catch (Exception e){
-            productClient.compensateReserveProducts(reserveDTOs);
+            inventoryClient.compensateReserveProducts(reserveDTOs);
             throw new RuntimeException("Order creation response lost!", e);
         }
     }
