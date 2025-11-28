@@ -10,10 +10,10 @@ import java.util.List;
 @FeignClient(name = "inventory-service", url = "${inventory.service.url}")
 public interface InventoryClient {
 
-    @PostMapping("/api/reserve")
+    @PostMapping("/api/product/reserve")
     List<ReserveResponseDTO> getAndReserveProducts(@RequestBody List<ReserveProductDTO> reserveProductDTO);
 
-    @PostMapping("/api/reserve/compensate")
+    @PostMapping("/api/product/release")
     void compensateReserveProducts(@RequestBody List<ReserveProductDTO> reserveProductDTO);
 
 }
