@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@FeignClient(name = "inventory-service", url = "${inventory.service.url")
+@FeignClient(name = "inventory-service", url = "${inventory.service.url}")
 public interface InventoryClient {
 
     @PostMapping("/api/reserve")
