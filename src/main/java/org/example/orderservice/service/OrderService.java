@@ -35,7 +35,6 @@ public class OrderService {
     public final OrderPersistenceService orderPersistenceService;
     public final OrderMapper orderMapper;
 
-    @Cacheable(value = "order-cache", key = "#root.methodName + ':' + T(org.springframework.security.core.context.SecurityContextHolder).context.authentication.name")
     public List<OrderDTO> getAll() {
         CustomUserDetails principal = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Order> all = orderRepository.findAllByUserId(principal.getId());
@@ -62,7 +61,6 @@ public class OrderService {
     }
 
     @Transactional
-    @Cacheable(value = "order-cache", key = "#root.methodName + ':' + T(org.springframework.security.core.context.SecurityContextHolder).context.authentication.name")
     public OrderDTO payForOrder(Long id) {
         Order order = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order Not Found!"));
         if(order.getStatus().equals(OrderStatus.PAID)){
@@ -73,7 +71,6 @@ public class OrderService {
     }
 
     @Transactional
-    @Cacheable(value = "order-cache", key = "#root.methodName + ':' + T(org.springframework.security.core.context.SecurityContextHolder).context.authentication.name")
     public OrderDTO unpayForOrder(Long id) {
         Order order = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order Not Found!"));
         if(order.getStatus().equals(OrderStatus.PAID)){

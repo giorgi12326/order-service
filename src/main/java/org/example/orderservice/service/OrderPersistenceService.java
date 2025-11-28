@@ -26,7 +26,6 @@ public class OrderPersistenceService {
 
 
     @Transactional
-    @Cacheable(value = "order-cache", key = "#root.methodName + ':' + T(org.springframework.security.core.context.SecurityContextHolder).context.authentication.name")
     public OrderDTO getOrderDTO(List<ReserveResponseDTO> reservedProducts) {
         List<OrderItem> orderItems = orderMapper.toOrderItems(reservedProducts);
 

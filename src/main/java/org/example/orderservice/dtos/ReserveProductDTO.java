@@ -7,6 +7,5 @@ import lombok.Data;
 @Builder
 public class ReserveProductDTO {
     Long productId;
-
     Integer quantity;
 }

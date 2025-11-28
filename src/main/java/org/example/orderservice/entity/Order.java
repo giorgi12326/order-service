@@ -25,6 +25,7 @@ public class Order {
 
     LocalDateTime updatedAt;
 
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     List<OrderItem> orderItems;
 
