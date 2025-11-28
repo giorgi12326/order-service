@@ -11,7 +11,7 @@ import java.util.List;
 public interface InventoryClient {
 
     @PostMapping("/api/product/reserve")
-    List<ReserveResponseDTO> getAndReserveProducts(@RequestBody List<ReserveProductDTO> reserveProductDTO);
+    List<ReserveProductDTO> getAndReserveProducts(@RequestBody List<ReserveProductDTO> reserveProductDTO);
 
     @PostMapping("/api/product/release")
     void compensateReserveProducts(@RequestBody List<ReserveProductDTO> reserveProductDTO);

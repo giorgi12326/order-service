@@ -2,10 +2,12 @@ package org.example.orderservice.service;
 
 import lombok.AllArgsConstructor;
 import org.example.orderservice.dtos.OrderDTO;
+import org.example.orderservice.dtos.ReserveProductDTO;
 import org.example.orderservice.dtos.ReserveResponseDTO;
 import org.example.orderservice.entity.Order;
 import org.example.orderservice.entity.OrderItem;
 import org.example.orderservice.entity.OrderStatus;
+import org.example.orderservice.feign.ProductClient;
 import org.example.orderservice.mapper.OrderMapper;
 import org.example.orderservice.repository.OrderRepository;
 import org.example.orderservice.security.CustomUserDetails;
@@ -23,11 +25,13 @@ import java.util.List;
 public class OrderPersistenceService {
     public final OrderMapper orderMapper;
     public final OrderRepository orderRepository;
+    public final ProductClient productClient;
 
 
     @Transactional
-    public OrderDTO getOrderDTO(List<ReserveResponseDTO> reservedProducts) {
-        System.out.println(reservedProducts);
+    public OrderDTO getOrderDTO(List<ReserveProductDTO> reservedProductsFromInventory) {
+        List<ReserveResponseDTO> reservedProducts = productClient.getInfoAboutProducts(reservedProductsFromInventory);
+
         List<OrderItem> orderItems = orderMapper.toOrderItems(reservedProducts);
 
         Order order = new Order();
@@ -36,6 +40,7 @@ public class OrderPersistenceService {
         CustomUserDetails principal = (CustomUserDetails) user.getPrincipal();
         order.setUserId(principal.getId());
         order.setStatus(OrderStatus.PENDING);
+
 
         float amount = 0f;
         for (OrderItem item : orderItems) {

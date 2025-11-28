@@ -1,7 +1,10 @@
-
 user:
   service:
-    url: ${USER_SERVICE_URL:http://localhost:8081}
+    url: ${USER_SERVICE_URL:http://localhost:8080}
+
+product:
+  service:
+    url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
 
 inventory:
   service:

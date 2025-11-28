@@ -34,7 +34,7 @@ public class OrderService {
 
     public OrderDTO createOrder(OrderDTO orderDTO) {
         List<ReserveProductDTO> reserveDTOs = orderMapper.toReserves(orderDTO.getOrderItems());
-        List<ReserveResponseDTO> reservedProducts;
+        List<ReserveProductDTO> reservedProducts;
         try {//here default to compensating , because i assumed that B commits more often then not
             reservedProducts = inventoryClient.getAndReserveProducts(reserveDTOs);
         }
