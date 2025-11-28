@@ -27,6 +27,7 @@ public class OrderPersistenceService {
 
     @Transactional
     public OrderDTO getOrderDTO(List<ReserveResponseDTO> reservedProducts) {
+        System.out.println(reservedProducts);
         List<OrderItem> orderItems = orderMapper.toOrderItems(reservedProducts);
 
         Order order = new Order();
