@@ -55,7 +55,13 @@ public class OrderService {
     @Transactional
     public void cancelOrder(CancelOrderDTO orderDTO) {
         Order order = orderRepository.findById(orderDTO.getOrderId()).orElseThrow(() -> new ResourceNotFoundException("ORDER NOT FOUND!"));
-        orderRepository.delete(order);
+
+        if(!order.getStatus().equals(OrderStatus.PENDING))
+            throw new IllegalStateException("ORDER IS ALREADY PAID FOR!");
+
+        order.setStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
+
         List<ReserveProductDTO> list = order.getOrderItems().stream().map(dto -> ReserveProductDTO.builder().productId(dto.getProductId()).quantity(dto.getQuantity()).build()).toList();
         inventoryClient.compensateReserveProducts(list);
     }

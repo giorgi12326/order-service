@@ -3,16 +3,10 @@ package org.example.orderservice.controller;
 import lombok.AllArgsConstructor;
 import org.example.orderservice.dtos.CancelOrderDTO;
 import org.example.orderservice.dtos.OrderDTO;
-import org.example.orderservice.dtos.ReserveProductDTO;
-import org.example.orderservice.dtos.ReserveResponseDTO;
-import org.example.orderservice.entity.Order;
-import org.example.orderservice.entity.OrderItem;
 import org.example.orderservice.service.OrderService;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
