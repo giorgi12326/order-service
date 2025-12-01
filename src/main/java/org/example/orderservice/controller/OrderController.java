@@ -1,6 +1,7 @@
 package org.example.orderservice.controller;
 
 import lombok.AllArgsConstructor;
+import org.example.orderservice.dtos.CancelOrderDTO;
 import org.example.orderservice.dtos.OrderDTO;
 import org.example.orderservice.dtos.ReserveProductDTO;
 import org.example.orderservice.dtos.ReserveResponseDTO;
@@ -32,6 +33,12 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<OrderDTO> create(@RequestBody OrderDTO order) {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(order));
+    }
+
+    @PostMapping("/cancel")
+    public ResponseEntity<Void> cancelOrder(@RequestBody CancelOrderDTO order) {
+        orderService.cancelOrder(order);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @PostMapping("/{id}/pay")

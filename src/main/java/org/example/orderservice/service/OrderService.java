@@ -1,6 +1,7 @@
 package org.example.orderservice.service;
 
 import lombok.AllArgsConstructor;
+import org.example.orderservice.dtos.CancelOrderDTO;
 import org.example.orderservice.dtos.OrderDTO;
 import org.example.orderservice.dtos.ReserveProductDTO;
 import org.example.orderservice.dtos.ReserveResponseDTO;
@@ -49,6 +50,14 @@ public class OrderService {
             inventoryClient.compensateReserveProducts(reserveDTOs);
             throw new RuntimeException("Order creation response lost!", e);
         }
+    }
+
+    @Transactional
+    public void cancelOrder(CancelOrderDTO orderDTO) {
+        Order order = orderRepository.findById(orderDTO.getOrderId()).orElseThrow(() -> new ResourceNotFoundException("ORDER NOT FOUND!"));
+        orderRepository.delete(order);
+        List<ReserveProductDTO> list = order.getOrderItems().stream().map(dto -> ReserveProductDTO.builder().productId(dto.getProductId()).quantity(dto.getQuantity()).build()).toList();
+        inventoryClient.compensateReserveProducts(list);
     }
 
     @Transactional
