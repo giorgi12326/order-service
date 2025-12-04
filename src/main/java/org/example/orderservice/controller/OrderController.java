@@ -25,8 +25,9 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<OrderDTO> create(@RequestBody OrderDTO order) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(order));
+    public ResponseEntity<OrderDTO> create(@RequestBody OrderDTO order,
+                                           @RequestHeader("idempotency-key") String idempotencyKey ) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(order, idempotencyKey));
     }
 
     @PostMapping("/cancel")
@@ -36,13 +37,13 @@ public class OrderController {
     }
 
     @PostMapping("/{id}/pay")
-    public ResponseEntity<OrderDTO> payForOrder(@PathVariable Long id) {
-        return ResponseEntity.ok(orderService.payForOrder(id));
+    public ResponseEntity<OrderDTO> payForOrder(@PathVariable Long id, @RequestHeader("idempotency-key") String idempotencyKey) {
+        return ResponseEntity.ok(orderService.payForOrder(id, idempotencyKey));
     }
 
-    @PostMapping("/{id}/unpay")
-    public ResponseEntity<OrderDTO> unpayForOrder(@PathVariable Long id) {
-        return ResponseEntity.ok(orderService.unpayForOrder(id));
+    @PostMapping("/unpay")
+    public ResponseEntity<OrderDTO> unpayForOrder(@RequestHeader("idempotency-key")String idempotencyKey) {
+        return ResponseEntity.ok(orderService.unpayForOrder(idempotencyKey));
     }
 
 //    @PutMapping("/{id}")

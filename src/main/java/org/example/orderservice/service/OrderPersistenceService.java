@@ -25,10 +25,8 @@ public class OrderPersistenceService {
     public final OrderRepository orderRepository;
     public final ProductClient productClient;
 
-
     @Transactional
-    public OrderDTO getOrderDTO(List<ReserveProductDTO> reservedProductsFromInventory) {
-        List<ReserveResponseDTO> reservedProducts = productClient.getInfoAboutProducts(reservedProductsFromInventory);
+    public OrderDTO getOrderDTO(List<ReserveProductDTO> reservedProductsFromInventory, List<ReserveResponseDTO> reservedProducts) {
         for (ReserveResponseDTO reservedProduct : reservedProducts) {
             for(ReserveProductDTO reservedProductFromInventory : reservedProductsFromInventory) {
                 if(reservedProduct.getProductId().equals(reservedProductFromInventory.getProductId())) {

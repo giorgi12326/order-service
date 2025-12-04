@@ -3,6 +3,8 @@ package org.example.orderservice.service;
 import lombok.AllArgsConstructor;
 import org.example.orderservice.dtos.Event;
 import org.example.orderservice.dtos.EventType;
+import org.example.orderservice.entity.Order;
+import org.example.orderservice.entity.OrderStatus;
 import org.example.orderservice.repository.OrderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,27 +28,14 @@ public class KafkaConsumer {
         log.info("Received message: {}", message);
     }
 
-
-    @KafkaListener(topics = "product-event", groupId = "my-group")
-    @Transactional
-    public void productListener(Event event) {
-        log.info("Received product-event: {}", event.toString());
-        if (event.getEventType() == EventType.DELETED) {
-            List<Long> productIds = (List<Long>) event.getPayload();
-
-            for (Long productId : productIds) {
-//                orderRepository.deleteByProductId(productId); // existing method for single product
-            }            log.info("Deleted order By ProductId: {}", event.getPayload());
-        }
-    }
-
     @KafkaListener(topics = "user-event", groupId = "my-group")
     @Transactional
     public void userListener(Event event) {
         log.info("Received user-event: {}", event.toString());
         if (event.getEventType() == EventType.DELETED) {
-            orderRepository.deleteByUserId(((Integer)event.getPayload()).longValue());
-            log.info("Deleted order By UserId: {}", event.getPayload());
+            List<Order> allByUserId = orderRepository.findAllByUserId(((Integer) event.getPayload()).longValue());
+            allByUserId.forEach(order -> {order.setStatus(OrderStatus.ORPHANED);});
+            log.info("Orphaned order By UserId: {}", event.getPayload());
         }
     }
 
