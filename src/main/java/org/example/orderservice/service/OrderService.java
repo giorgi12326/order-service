@@ -2,12 +2,10 @@ package org.example.orderservice.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.RetryableException;
 import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
-import org.example.orderservice.dtos.CancelOrderDTO;
-import org.example.orderservice.dtos.OrderDTO;
-import org.example.orderservice.dtos.ReserveProductDTO;
-import org.example.orderservice.dtos.ReserveResponseDTO;
+import org.example.orderservice.dtos.*;
 import org.example.orderservice.entity.IdempotencyRecord;
 import org.example.orderservice.entity.Order;
 import org.example.orderservice.entity.OrderStatus;
@@ -46,42 +44,25 @@ public class OrderService {
     }
 
     public OrderDTO createOrder(OrderDTO orderDTO, String idempotencyKey) {
-        List<ReserveProductDTO> reservedProducts;
         List<ReserveProductDTO> reserveDTOs = orderMapper.toReserves(orderDTO.getOrderItems());
+        List<ReserveResponseDTO> reservedProducts = productClient.getInfoAboutProducts(reserveDTOs);
 
-        try {
-            reservedProducts = inventoryClient.getAndReserveProducts(reserveDTOs, idempotencyKey);
-        }
-        catch (feign.RetryableException e){
-            throw new RuntimeException("Request or Response lost rolling back, NEEDS MANUAL INTERVENTION !", e);
-        }
+        return orderPersistenceService.prepareAndPersistOrder(reserveDTOs, reservedProducts, idempotencyKey);
+
+    }
+
+    public void cancelOrder(CancelOrderDTO orderDTO, String idempotencyKey) {
+        List<ReserveProductDTO> list = orderPersistenceService.getReserveProductDTOS(orderDTO);
         try{
-            return fetchFataAndChangeState(reservedProducts);
+            inventoryClient.releaseProducts(list, idempotencyKey);
         }
-        catch (Exception e){
-            inventoryClient.compensateReserveProducts("compensate-" + idempotencyKey);
-            throw new RuntimeException("Order creation response lost!", e);
+        catch (RetryableException e){
+            orderPersistenceService.compensateGetReserveProductDTOS(orderDTO);
+            throw new RuntimeException("Request or Response lost back, NEEDS MANUAL INTERVENTION !", e);
         }
-    }
-
-    private OrderDTO fetchFataAndChangeState(List<ReserveProductDTO> reservedProductsFromInventory) {
-        List<ReserveResponseDTO> reservedProducts = productClient.getInfoAboutProducts(reservedProductsFromInventory);
-
-        return orderPersistenceService.getOrderDTO(reservedProductsFromInventory, reservedProducts);
-    }
-
-    @Transactional
-    public void cancelOrder(CancelOrderDTO orderDTO) {
-        Order order = orderRepository.findById(orderDTO.getOrderId()).orElseThrow(() -> new ResourceNotFoundException("ORDER NOT FOUND!"));
-
-        if(!order.getStatus().equals(OrderStatus.PENDING))
-            throw new IllegalStateException("ORDER IS ALREADY PAID FOR!");
-
-        order.setStatus(OrderStatus.CANCELLED);
-        orderRepository.save(order);
-
-        List<ReserveProductDTO> list = order.getOrderItems().stream().map(dto -> ReserveProductDTO.builder().productId(dto.getProductId()).quantity(dto.getQuantity()).build()).toList();
-//        inventoryClient.compensateReserveProducts(list);TODO
+        catch(Exception e){
+            orderPersistenceService.compensateGetReserveProductDTOS(orderDTO);
+        }
     }
 
     @Transactional
@@ -120,10 +101,10 @@ public class OrderService {
 
     @Transactional
     public OrderDTO unpayForOrder(String idempotencyKey) {
-        Optional<IdempotencyRecord> byId = idempotentRecordRepository.findById(idempotencyKey);
-        if(byId.isPresent()){
+        Optional<IdempotencyRecord> previous = idempotentRecordRepository.findById(idempotencyKey);
+        if(previous.isPresent()){
             try {
-                return objectMapper.readValue(byId.get().getResponseJson(), OrderDTO.class);
+                return objectMapper.readValue(previous.get().getResponseJson(), OrderDTO.class);
             } catch (JsonProcessingException ex) {
                 throw new RuntimeException("Failed to parse JSON");
             }
@@ -133,7 +114,9 @@ public class OrderService {
                 .actionType("PAY_FOR_ORDER")
                 .build();
 
-        Order order = orderRepository.findById(Long.valueOf(record.getResponseJson())).orElseThrow(() -> new ResourceNotFoundException("Order Not Found!"));
+        IdempotencyRecord byId = idempotentRecordRepository.findById(idempotencyKey.substring(11)).orElseThrow(()-> new ResourceNotFoundException("cant compensate nonexisting payment"));
+
+        Order order = orderRepository.findById(Long.valueOf(byId.getRequestJson())).orElseThrow(() -> new ResourceNotFoundException("Order Not Found!"));
         if(order.getStatus().equals(OrderStatus.PAID)){
             order.setStatus(OrderStatus.PENDING);
             OrderDTO dto = orderMapper.toDTO(orderRepository.save(order));

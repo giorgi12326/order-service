@@ -31,8 +31,9 @@ public class OrderController {
     }
 
     @PostMapping("/cancel")
-    public ResponseEntity<Void> cancelOrder(@RequestBody CancelOrderDTO order) {
-        orderService.cancelOrder(order);
+    public ResponseEntity<Void> cancelOrder(@RequestBody CancelOrderDTO order,
+                                            @RequestHeader("idempotency-key") String idempotencyKey) {
+        orderService.cancelOrder(order, idempotencyKey);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
@@ -41,7 +42,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.payForOrder(id, idempotencyKey));
     }
 
-    @PostMapping("/unpay")
+    @PostMapping("/compensate-pay")
     public ResponseEntity<OrderDTO> unpayForOrder(@RequestHeader("idempotency-key")String idempotencyKey) {
         return ResponseEntity.ok(orderService.unpayForOrder(idempotencyKey));
     }

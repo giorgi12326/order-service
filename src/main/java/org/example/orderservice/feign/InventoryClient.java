@@ -18,7 +18,10 @@ public interface InventoryClient {
         @RequestBody List<ReserveProductDTO> reserveProductDTO,
         @RequestHeader("idempotency-key") String idempotencyKey);
 
-    @PostMapping("/api/product/release")
+    @PostMapping("/api/product/reserve-compensate")
     void compensateReserveProducts(@RequestHeader String idempotencyKey);
+
+    @PostMapping("/release")
+    List<ReserveResponseDTO> releaseProducts(List<ReserveProductDTO> reserveProductDTO,@RequestHeader String idempotencyKey);
 
 }
