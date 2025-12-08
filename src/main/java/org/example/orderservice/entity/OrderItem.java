@@ -1,12 +1,16 @@
 package org.example.orderservice.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 
 @Entity
 @Table(name = "order_items")
-@Data
+@Setter
+@Getter
+@ToString(exclude = "order")
+@AllArgsConstructor
+@NoArgsConstructor
 public class OrderItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

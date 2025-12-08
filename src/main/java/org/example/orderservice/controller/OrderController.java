@@ -1,11 +1,8 @@
 package org.example.orderservice.controller;
 
 import lombok.AllArgsConstructor;
+import org.example.orderservice.dtos.CancelOrderDTO;
 import org.example.orderservice.dtos.OrderDTO;
-import org.example.orderservice.dtos.ReserveProductDTO;
-import org.example.orderservice.dtos.ReserveResponseDTO;
-import org.example.orderservice.entity.Order;
-import org.example.orderservice.entity.OrderItem;
 import org.example.orderservice.service.OrderService;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.http.HttpStatus;
@@ -28,8 +25,26 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<OrderDTO> create(@RequestBody OrderDTO order) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(order));
+    public ResponseEntity<OrderDTO> create(@RequestBody OrderDTO order,
+                                           @RequestHeader("idempotency-key") String idempotencyKey ) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.createOrder(order, idempotencyKey));
+    }
+
+    @PostMapping("/cancel")
+    public ResponseEntity<Void> cancelOrder(@RequestBody CancelOrderDTO order,
+                                            @RequestHeader("idempotency-key") String idempotencyKey) {
+        orderService.cancelOrder(order, idempotencyKey);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @PostMapping("/{id}/pay")
+    public ResponseEntity<OrderDTO> payForOrder(@PathVariable Long id, @RequestHeader("idempotency-key") String idempotencyKey) {
+        return ResponseEntity.ok(orderService.payForOrder(id, idempotencyKey));
+    }
+
+    @PostMapping("/compensate-pay")
+    public ResponseEntity<OrderDTO> unpayForOrder(@RequestHeader("idempotency-key")String idempotencyKey) {
+        return ResponseEntity.ok(orderService.unpayForOrder(idempotencyKey));
     }
 
 //    @PutMapping("/{id}")

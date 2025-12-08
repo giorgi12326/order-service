@@ -22,4 +22,14 @@ public class GlobalExceptionHandler {
                 .build();
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorMessageDTO);
     }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorMessageDTO> handleConflictException(Exception e) {
+        ErrorMessageDTO errorMessageDTO = ErrorMessageDTO.builder()
+                .timestamp(LocalDateTime.now())
+                .message(e.getMessage())
+                .status(HttpStatus.CONFLICT)
+                .build();
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorMessageDTO);
+    }
 }

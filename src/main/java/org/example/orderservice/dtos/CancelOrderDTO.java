@@ -5,7 +5,6 @@ import lombok.Data;
 
 @Data
 @Builder
-public class ReserveProductDTO {
-    Long productId;
-    Integer quantity;
+public class CancelOrderDTO {
+    Long orderId;
 }

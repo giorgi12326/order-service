@@ -1,76 +1,134 @@
 package org.example.orderservice.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.RetryableException;
+import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
-import org.example.orderservice.dtos.OrderDTO;
-import org.example.orderservice.dtos.ReserveProductDTO;
-import org.example.orderservice.dtos.ReserveResponseDTO;
+import org.example.orderservice.dtos.*;
+import org.example.orderservice.entity.IdempotencyRecord;
 import org.example.orderservice.entity.Order;
-import org.example.orderservice.entity.OrderItem;
 import org.example.orderservice.entity.OrderStatus;
+import org.example.orderservice.exception.ConflictException;
+import org.example.orderservice.exception.ResourceNotFoundException;
+import org.example.orderservice.feign.InventoryClient;
 import org.example.orderservice.feign.ProductClient;
-import org.example.orderservice.feign.UserClient;
 import org.example.orderservice.mapper.OrderMapper;
+import org.example.orderservice.repository.IdempotentRecordRepository;
 import org.example.orderservice.repository.OrderRepository;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
+import org.example.orderservice.security.CustomUserDetails;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
 public class OrderService {
     public final OrderRepository orderRepository;
-    public final UserClient userClient;
+    public final InventoryClient inventoryClient;
     public final ProductClient productClient;
+    public final OrderPersistenceService orderPersistenceService;
     public final OrderMapper orderMapper;
-    private CacheManager cacheManager;
+    public final ObjectMapper objectMapper;
+    private final IdempotentRecordRepository idempotentRecordRepository;
+    private final EntityManager entityManager;
 
-    @Cacheable(value = "order-cache")
+
     public List<OrderDTO> getAll() {
-        return orderMapper.toDTOs(orderRepository.findAll());
+        CustomUserDetails principal = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        List<Order> all = orderRepository.findAllByUserId(principal.getId());
+        return orderMapper.toDTOs(all);
     }
 
-    @CacheEvict(value = "order-cache", allEntries = true)
-    public OrderDTO createOrder(OrderDTO orderDTO) {
-        if (!userClient.userExists(orderDTO.getUserId())) {
-            throw new RuntimeException("User does not exist");
+    public OrderDTO createOrder(OrderDTO orderDTO, String idempotencyKey) {
+        List<ReserveProductDTO> reserveDTOs = orderMapper.toReserves(orderDTO.getOrderItems());
+        List<ReserveResponseDTO> reservedProducts = productClient.getInfoAboutProducts(reserveDTOs);
+
+        return orderPersistenceService.prepareAndPersistOrder(reserveDTOs, reservedProducts, idempotencyKey);
+
+    }
+
+    public void cancelOrder(CancelOrderDTO orderDTO, String idempotencyKey) {
+        List<ReserveProductDTO> list = orderPersistenceService.getReserveProductDTOS(orderDTO);
+        try{
+            inventoryClient.releaseProducts(list, idempotencyKey);
         }
-
-        Order order = new Order();
-        order.setUserId(orderDTO.getUserId());
-        order.setStatus(OrderStatus.PENDING);
-
-        List<OrderItem> items = orderMapper.toEntities(orderDTO.getOrderItems());
-        for (OrderItem item : items) {
-            item.setOrder(order);
+        catch (RetryableException e){
+            orderPersistenceService.compensateGetReserveProductDTOS(orderDTO);
+            throw new RuntimeException("Request or Response lost back, NEEDS MANUAL INTERVENTION !", e);
         }
+        catch(Exception e){
+            orderPersistenceService.compensateGetReserveProductDTOS(orderDTO);
+        }
+    }
 
-        order.setOrderItems(items);
+    @Transactional
+    public OrderDTO payForOrder(Long id, String idempotencyKey) {
 
-        List<ReserveProductDTO> reserveDTOs = orderMapper.toReserveDTO(items);
-        List<ReserveResponseDTO> reservedProducts = productClient.getAndReserveProducts(reserveDTOs);
-
-        Map<Long, Float> productPriceMap = reservedProducts.stream()
-                .collect(Collectors.toMap(ReserveResponseDTO::getId, ReserveResponseDTO::getPrice));
-
-        float amount = 0f;
-        for (OrderItem item : items) {
-            Float price = productPriceMap.get(item.getProductId());
-            if (price != null) {
-                amount += price * item.getQuantity();
-                item.setPrice(price); // set the price on order item
-            } else {
-                throw new RuntimeException("Product not found or not available: " + item.getProductId());
+        Optional<IdempotencyRecord> byId = idempotentRecordRepository.findById(idempotencyKey);
+        if(byId.isPresent()){
+            try {
+                return objectMapper.readValue(byId.get().getResponseJson(), OrderDTO.class);
+            } catch (JsonProcessingException ex) {
+                throw new RuntimeException("Failed to parse JSON");
             }
         }
+        IdempotencyRecord record = IdempotencyRecord.builder()
+                .idempotencyKey(idempotencyKey)
+                .actionType("PAY_FOR_ORDER")
+                .requestJson(id.toString())
+                .build();
 
-        order.setAmount(amount);
+        Order order = orderRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Order Not Found!"));
+        if(order.getStatus().equals(OrderStatus.PAID)){
+            throw new ConflictException("Order Payment Already made!");
+        }
+        order.setStatus(OrderStatus.PAID);
 
-        return orderMapper.toDTO(orderRepository.save(order));
+        OrderDTO dto = orderMapper.toDTO(orderRepository.save(order));
+
+        try {
+            record.setResponseJson(objectMapper.writeValueAsString(dto));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize to JSON",e);
+        }
+        idempotentRecordRepository.save(record);
+        return dto;
+    }
+
+    @Transactional
+    public OrderDTO unpayForOrder(String idempotencyKey) {
+        Optional<IdempotencyRecord> previous = idempotentRecordRepository.findById(idempotencyKey);
+        if(previous.isPresent()){
+            try {
+                return objectMapper.readValue(previous.get().getResponseJson(), OrderDTO.class);
+            } catch (JsonProcessingException ex) {
+                throw new RuntimeException("Failed to parse JSON");
+            }
+        }
+        IdempotencyRecord record = IdempotencyRecord.builder()
+                .idempotencyKey(idempotencyKey)
+                .actionType("PAY_FOR_ORDER")
+                .build();
+
+        IdempotencyRecord byId = idempotentRecordRepository.findById(idempotencyKey.substring(11)).orElseThrow(()-> new ResourceNotFoundException("cant compensate nonexisting payment"));
+
+        Order order = orderRepository.findById(Long.valueOf(byId.getRequestJson())).orElseThrow(() -> new ResourceNotFoundException("Order Not Found!"));
+        if(order.getStatus().equals(OrderStatus.PAID)){
+            order.setStatus(OrderStatus.PENDING);
+            OrderDTO dto = orderMapper.toDTO(orderRepository.save(order));
+            try {
+                record.setResponseJson(objectMapper.writeValueAsString(dto));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to serialize to JSON",e);
+            }
+            idempotentRecordRepository.save(record);
+            return dto;
+        }
+        else throw new ConflictException("Order Payment was never made!");
     }
 
 
