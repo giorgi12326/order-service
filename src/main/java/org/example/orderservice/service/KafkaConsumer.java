@@ -42,6 +42,14 @@ public class KafkaConsumer {
                     orderRepository.save(order);
                 });
         }
+        else if(event.getEventType().equals("PRODUCTS_RESERVE_FAILED")) {
+            Long id = (Long) event.getPayload();
+            orderRepository.findById(id)
+                    .ifPresent(order -> {
+                        order.setStatus(OrderStatus.NOT_ENOUGH_IN_STOCK);
+                        orderRepository.save(order);
+                    });
+        }
     }
 
 }
