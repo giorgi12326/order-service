@@ -31,6 +31,7 @@ public class KafkaConsumer {
             log.info("Orphaned order By UserId: {}", event.getPayload());
         }
     }
+
     @KafkaListener(topics = "order-topic", groupId = "my-group")
     @Transactional
     public void orderListener(Event event) {

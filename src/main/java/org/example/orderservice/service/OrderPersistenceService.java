@@ -95,4 +95,27 @@ public class OrderPersistenceService {
         order.setStatus(OrderStatus.PENDING);
         orderRepository.save(order);
     }
+
+
+    @Transactional
+    public void markAsSucceeded(Outbox outbox) {
+        Outbox managed = outboxRepository.findById(outbox.getId()).orElseThrow(() -> new RuntimeException("scheduler cnat find the otubox"));
+        managed.setStatus(OutboxStatus.SUCCEEDED);
+        outboxRepository.save(managed);
+    }
+
+    @Transactional
+    public void markAsFailed(Outbox outbox) {
+        Outbox managed = outboxRepository.findById(outbox.getId()).orElseThrow(() -> new RuntimeException("scheduler cnat find the otubox"));
+        managed.setStatus(OutboxStatus.FAILED);
+        outboxRepository.save(managed);
+    }
+
+    @Transactional
+    public void incrementAttempts(Outbox outbox) {
+        Outbox managed = outboxRepository.findById(outbox.getId()).orElseThrow(() -> new RuntimeException("scheduler cnat find the otubox"));
+
+        managed.setAttempts(managed.getAttempts() + 1);
+        outboxRepository.save(managed);
+    }
 }
