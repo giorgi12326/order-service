@@ -44,7 +44,7 @@ public class OrderPersistenceService {
 
         ReserveForOrderDTO build = ReserveForOrderDTO.builder().reserveProducts(reserveProducts).orderId(save.getId()).build();
         Event event = Event.builder().eventType("RESERVE_PRODUCTS").payload(build).build();
-        Outbox outbox = Outbox.builder().event(jsonUtils.toJson(event)).topicName("inventory-topic").eventType("RESERVE_PRODUCTS").build();
+        Outbox outbox = Outbox.builder().event(jsonUtils.toJson(event)).topicName("inventory-topic").eventType("RESERVE_PRODUCTS").status(OutboxStatus.PENDING).build();
         outboxRepository.save(outbox);
 
         return dto;
