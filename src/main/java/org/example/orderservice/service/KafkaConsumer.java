@@ -32,7 +32,7 @@ public class KafkaConsumer {
         }
     }
 
-    @KafkaListener(topics = "order-topic", groupId = "my-group")
+    @KafkaListener(topics = "inventory.order.reservation", groupId = "my-group")
     @Transactional
     public void orderListener(Event event) {
         if(event.getEventType().equals("PRODUCTS_RESERVED")) {
