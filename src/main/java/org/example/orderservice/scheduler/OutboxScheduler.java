@@ -28,6 +28,7 @@ public class OutboxScheduler {
     @Scheduled(fixedRate = 10000)
     public void publishPendingOutbox() {
         List<Outbox> pendingOutboxes = outboxRepository.findOutboxesByStatus(OutboxStatus.PENDING);
+        System.out.println(pendingOutboxes.size());
         pendingOutboxes.forEach((outbox) -> {
             Event event = jsonUtils.fromJson(outbox.getEvent(), Event.class);
             kafkaTemplate.send(outbox.getTopicName(), event)
